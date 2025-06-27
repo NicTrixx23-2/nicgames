@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Imposter Spiel</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; }
+    #game, #cardContainer, #timer, #chatContainer, #voting, #voteSummary { display: none; }
+    #wordCard {
+      width: 300px; height: 200px; border: 4px solid black; margin: 20px auto;
+      position: relative; overflow: hidden; background: white;
+    }
+    #word {
+      position: absolute; width: 100%; height: 100%; line-height: 200px;
+      font-size: 2em; z-index: 0;
+    }
+    .cover {
+      position: absolute; left: 0; top: 0; height: 100%; width: 100%;
+      background: black; z-index: 1; transition: left 0.3s ease; pointer-events: none;
+    }
+    input[type=range] { width: 300px; margin-top: 20px; }
+    #chatBox {
+      width: 300px; height: 150px; overflow-y: auto; border: 1px solid #ccc;
+      margin: 10px auto; background: #fff; padding: 5px; text-align: left;
+    }
+    #voteButtons button { display: block; margin: 5px auto; }
+  </style>
+</head>
+<body>
+
+<h1>Imposter Spiel</h1>
+
+<div id="join">
+  <input id="nameInput" placeholder="Dein Name" />
+  <input id="roomInput" placeholder="Raumcode" />
+  <button id="joinBtn">Beitreten</button>
+</div>
+
+<div id="game">
+  <p>Warte auf Spieler...</p>
+  <ul id="playerList"></ul>
+  <button id="startBtn" style="display:none">Spiel starten</button>
+  <button id="leaveBtn">Lobby verlassen</button>
+</div>
+
+<div id="cardContainer">
+  <div id="wordCard">
+    <div id="word">---</div>
+    <div class="cover" id="cover"></div>
+  </div>
+  <input type="range" id="slider" min="0" max="100" value="0" />
+  <br />
+  <button id="confirmBtn">Ich habe mein Wort gesehen</button>
+</div>
+
+<div id="timer">
+  <h2>Runde startet in <span id="countdown">10</span>...</h2>
+</div>
+
+<div id="chatContainer">
+  <div id="chatBox"></div>
+  <input id="chatInput" placeholder="Nachricht..." />
+  <button id="sendBtn">Senden</button>
+  <button id="beginVoting" style="display:none">Voting starten</button>
+</div>
+
+<div id="voting">
+  <h3>Wähle den Impostor:</h3>
+  <div id="voteButtons"></div>
+</div>
+
+<div id="voteSummary"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
