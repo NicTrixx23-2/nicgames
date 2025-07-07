@@ -1,146 +1,145 @@
 const socket = io();
-let currentRoom = null;
-let playerName = "";
+let currentRoom = "";
 let isHost = false;
+let players = [];
+let hasVoted = false;
 
-const menu = document.getElementById("menu");
-const lobbyList = document.getElementById("lobbyList");
-const refreshBtn = document.getElementById("refreshBtn");
-const createForm = document.getElementById("createForm");
-const joinForm = document.getElementById("joinForm");
-const gameDiv = document.getElementById("game");
-const groupNameEl = document.getElementById("groupName");
-const editGroupSpan = document.getElementById("editGroup");
-const groupNameInput = document.getElementById("groupNameInput");
-const playersDiv = document.getElementById("players");
-const startBtn = document.getElementById("startBtn");
-const chatBox = document.getElementById("chatBox");
-const chatForm = document.getElementById("chatForm");
-const chatInput = document.getElementById("chatInput");
-const votingBox = document.getElementById("votingBox");
-const leaveBtn = document.getElementById("leaveBtn");
-
-function showMenu() {
-  menu.style.display = "block";
-  gameDiv.style.display = "none";
-  socket.emit("getRooms");
-}
-
-function showGame() {
-  menu.style.display = "none";
-  gameDiv.style.display = "block";
-}
-
-refreshBtn.onclick = () => socket.emit("getRooms");
-
-socket.on("roomsList", list => {
-  lobbyList.innerHTML = "";
-  list.forEach(r => {
-    const el = document.createElement("div");
-    el.textContent = `${r.groupName} (${r.playerCount})${r.hasPassword?" 🔒":""}`;
-    el.className = "lobbyEntry";
-    el.onclick = () => {
-      const name = prompt("Dein Name:");
-      const pwd = r.hasPassword ? prompt("Passwort:") : "";
-      playerName = name || "";
-      currentRoom = r.roomId;
-      socket.emit("joinRoom", { roomId: r.roomId, name, password: pwd });
-    };
-    lobbyList.appendChild(el);
-  });
+document.getElementById("joinBtn").addEventListener("click", () => {
+  const name = document.getElementById("nameInput").value.trim();
+  const room = document.getElementById("roomInput").value.trim();
+  if (!name || !room) return alert("Bitte Name und Raumcode eingeben.");
+  localStorage.setItem("name", name);
+  localStorage.setItem("room", room);
+  connectSocketAndJoinRoom(name, room);
 });
 
-createForm.onsubmit = e => {
-  e.preventDefault();
-  socket.emit("createRoom", {
-    roomId: createForm.createRoomId.value,
-    groupName: createForm.createGroupName.value,
-    password: createForm.createPassword.value
-  });
-};
-
-socket.on("createRoomResult", r => {
-  if (!r.success) alert(r.message);
-  else showMenu();
-});
-
-joinForm.onsubmit = e => {
-  e.preventDefault();
-  playerName = joinForm.joinName.value;
-  currentRoom = joinForm.joinRoomId.value;
-  socket.emit("joinRoom", {
-    roomId: currentRoom,
-    name: playerName,
-    password: joinForm.joinPassword.value
-  });
-};
-
-socket.on("joinRoomResult", r => {
-  if (!r.success) alert(r.message);
-  else showGame();
-});
-
-socket.on("playerList", ({ players, hostId, groupName }) => {
-  isHost = socket.id === hostId;
-  groupNameEl.textContent = groupName;
-  editGroupSpan.style.display = isHost ? "inline" : "none";
-  playersDiv.innerText = "Spieler: " + players.map(p => p.name).join(", ");
-  startBtn.style.display = isHost ? "inline-block" : "none";
-});
-
-groupNameInput.onkeypress = e => {
-  if (e.key === "Enter") {
-    const newName = groupNameInput.value.trim();
-    if (newName) socket.emit("renameGroup", { roomId: currentRoom, newName });
+function connectSocketAndJoinRoom(name, room) {
+  if (typeof socket.disconnected === "boolean" && socket.disconnected) {
+    socket.connect();
   }
-};
+  currentRoom = room;
+  socket.emit("joinRoom", { name, roomId: room });
+  document.getElementById("join").style.display = "none";
+  document.getElementById("game").style.display = "block";
+}
 
-socket.on("groupRenamed", newName => {
-  groupNameEl.textContent = newName;
+document.getElementById("leaveBtn").addEventListener("click", () => {
+  socket.emit("leaveRoom", currentRoom);
+  socket.disconnect();
+  localStorage.removeItem("name");
+  localStorage.removeItem("room");
+  location.reload();
 });
 
-startBtn.onclick = () => socket.emit("startGame", currentRoom);
+socket.on("playerList", ({ names, hostId }) => {
+  players = names;
+  const list = document.getElementById("playerList");
+  list.innerHTML = names.map(n => `<li>${n}</li>`).join("");
+  isHost = socket.id === hostId;
+  document.getElementById("startBtn").style.display = isHost ? "inline-block" : "none";
+  document.getElementById("beginVoting").style.display = isHost ? "inline-block" : "none";
+});
 
-chatForm.onsubmit = e => {
-  e.preventDefault();
-  const msg = chatInput.value.trim();
-  if (msg) socket.emit("chatMessage", { roomId: currentRoom, message: msg });
-  chatInput.value = "";
-};
+document.getElementById("startBtn").addEventListener("click", () => {
+  socket.emit("startGame", currentRoom);
+});
+
+socket.on("assignRole", ({ role, word }) => {
+  document.getElementById("game").style.display = "none";
+  document.getElementById("cardContainer").style.display = "block";
+  const wordDiv = document.getElementById("word");
+  wordDiv.innerText = role === "impostor" ? "Du bist der IMPOSTOR!" : `Dein Wort: ${word}`;
+  wordDiv.style = "";
+  document.getElementById("confirmBtn").style.display = "inline-block";
+  document.getElementById("cover").style.left = "0";
+  document.getElementById("slider").value = 0;
+  hasVoted = false;
+});
+
+document.getElementById("confirmBtn").addEventListener("click", () => {
+  socket.emit("confirmedWord", currentRoom);
+  document.getElementById("confirmBtn").style.display = "none";
+  const wordDiv = document.getElementById("word");
+  wordDiv.style.position = "absolute";
+  wordDiv.style.top = "10px";
+  wordDiv.style.right = "10px";
+  wordDiv.style.fontSize = "1.2em";
+});
+
+socket.on("startTimer", (seconds) => {
+  document.getElementById("cardContainer").style.display = "none";
+  document.getElementById("timer").style.display = "block";
+  document.getElementById("chatContainer").style.display = "block";
+  const countdownEl = document.getElementById("countdown");
+  countdownEl.innerText = seconds;
+
+  let timeLeft = seconds;
+  const interval = setInterval(() => {
+    timeLeft--;
+    countdownEl.innerText = timeLeft;
+    if (timeLeft <= 0) {
+      clearInterval(interval);
+      document.getElementById("timer").style.display = "none";
+    }
+  }, 1000);
+});
+
+document.getElementById("sendBtn").addEventListener("click", () => {
+  const msg = document.getElementById("chatInput").value.trim();
+  if (msg) {
+    socket.emit("chatMessage", { roomId: currentRoom, message: msg });
+    document.getElementById("chatInput").value = "";
+  }
+});
 
 socket.on("chatMessage", ({ name, message }) => {
-  const d = document.createElement("div");
-  d.innerHTML = `<strong>${name}:</strong> ${message}`;
-  chatBox.appendChild(d);
-  chatBox.scrollTop = chatBox.scrollHeight;
+  const box = document.getElementById("chatBox");
+  box.innerHTML += `<div><strong>${name}:</strong> ${message}</div>`;
+  box.scrollTop = box.scrollHeight;
+});
+
+document.getElementById("beginVoting").addEventListener("click", () => {
+  socket.emit("beginVoting", currentRoom);
 });
 
 socket.on("showVoting", ({ names }) => {
-  votingBox.innerHTML = "<h3>Stimme ab:</h3>";
-  names.forEach(n => {
-    const b = document.createElement("button");
-    b.textContent = n;
-    b.onclick = () => {
-      socket.emit("vote", { roomId: currentRoom, votedFor: n });
-      votingBox.innerText = `Du hast für ${n} abgestimmt.`;
+  const voting = document.getElementById("voting");
+  const buttons = document.getElementById("voteButtons");
+  voting.style.display = "block";
+  buttons.innerHTML = "";
+  names.forEach(name => {
+    const btn = document.createElement("button");
+    btn.textContent = name;
+    btn.onclick = () => {
+      if (hasVoted) return;
+      hasVoted = true;
+      socket.emit("vote", { roomId: currentRoom, votedFor: name });
+      voting.innerHTML = `<p>Du hast für <strong>${name}</strong> gestimmt.</p>`;
     };
-    votingBox.appendChild(b);
+    buttons.appendChild(btn);
   });
 });
 
 socket.on("voteResult", ({ votedOut, isImpostor }) => {
-  votingBox.innerHTML = `<strong>${votedOut} wurde rausgewählt.</strong><br>` +
-    (votedOut === "Niemand" ? "Keine Mehrheit." : (isImpostor ? "Er war der Impostor!" : "Er war unschuldig."));
+  document.getElementById("voting").style.display = "none";
+  document.getElementById("voteSummary").style.display = "block";
+  document.getElementById("voteSummary").innerHTML =
+    `<h2>${votedOut} wurde gewählt.<br>${votedOut === "Niemand" ? "Keine Mehrheit erreicht." : isImpostor ? "✅ Impostor enttarnt!" : "❌ Falsche Wahl – Impostor gewinnt!"}</h2>`;
 });
 
-leaveBtn.onclick = () => {
-  socket.emit("leaveRoom", currentRoom);
-  currentRoom = null;
-  showMenu();
-};
+document.getElementById("slider").addEventListener("input", (e) => {
+  const val = (e.target.value / 100) * 300;
+  document.getElementById("cover").style.left = `${val}px`;
+});
+document.getElementById("slider").addEventListener("mouseup", () => {
+  document.getElementById("slider").value = 0;
+  document.getElementById("cover").style.left = "0";
+});
 
 window.addEventListener("beforeunload", () => {
-  if (currentRoom) socket.emit("leaveRoom", currentRoom);
+  socket.emit("leaveRoom", currentRoom);
+  /*socket.emit("host-change");*/
+  socket.disconnect();
+  localStorage.removeItem("name");
+  localStorage.removeItem("room");
 });
-
-showMenu();
