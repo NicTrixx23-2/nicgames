@@ -33,7 +33,35 @@ io.on("connection", (socket) => {
     const room = rooms[roomId];
     if (!room) return;
 
-    const words = [/* wie gehabt... */];
+    const words = [
+  "Affe", "Algorithmus", "Angst", "Ananas", "Apfel", "Architekt", "Astronaut", "Autor", "Auto",
+  "Bäcker", "Bahn", "Balkon", "Ball", "Banane", "Bär", "Baum", "Berg", "Bett", "Bildschirm",
+  "Birne", "Blitz", "Blume", "Blumenkohl", "Bleistift", "Boot", "Bonbon", "Bohne", "Brot", "Brötchen",
+  "Brokkoli", "Buch", "Burger", "Bus", "Chemiker", "Chef", "Cola", "Computer", "Dachboden", "Datenbank",
+  "Designer", "Detektiv", "Dichter", "Dorf", "Dreieck", "Drucker", "Eier", "Einstein", "Ei", "Einhorn",
+  "Eis", "Elefant", "Erbse", "Erde", "Erinnerung", "Essig", "Eule", "Evolution", "Fähre", "Fahrrad",
+  "Fernseher", "Feuer", "Feuerwehr", "Fisch", "Flasche", "Fleisch", "Flugzeug", "Fluss", "Friseur", "Freiheit",
+  "Frosch", "Gabel", "Gans", "Gärtner", "Geduld", "Geheimnis", "Gerechtigkeit", "Gericht", "Glas", "Gold",
+  "Gott", "Gras", "Gummi", "Gurke", "Hahn", "Handy", "Haus", "Heft", "Himmel", "Hoffnung",
+  "Holz", "Hund", "Hypothese", "Idee", "Insel", "Ironie", "Jäger", "Journalist", "Kabel", "Kaffee",
+  "Karotte", "Kartoffel", "Karte", "Karteikarte", "Kamera", "Kellner", "Keks", "Keller", "Kiwi", "Kino",
+  "Kleber", "Koch", "Kompass", "Korn", "Krokodil", "Kuchen", "Kuh", "Kuli", "Kupfer", "Lampe",
+  "Laptop", "Laser", "Lautsprecher", "Lehrer", "Licht", "Linsen", "Lineal", "Löwe", "Luft", "Magnet",
+  "Mais", "Maler", "Marker", "Maus", "Mechaniker", "Meer", "Mehl", "Melone", "Metall", "Metapher",
+  "Mikroskop", "Milch", "Mikrofon", "Molekül", "Mond", "Motorrad", "Müll", "Mund", "Mut", "Natur",
+  "Neuron", "Nudel", "Obst", "Orange", "Oxidation", "Papier", "Paprika", "Paradoxon", "Park", "Pfeffer",
+  "Philosophie", "Pilot", "Pizza", "Physiker", "Pinguin", "Plastik", "Planet", "Polizei", "Pommes", "Pony",
+  "Programmierer", "Radiergummi", "Radieschen", "Rakete", "Radio", "Regen", "Reis", "Reise", "Restaurant", "Roboter",
+  "Roller", "Salat", "Salz", "Sänger", "Schauspieler", "Schere", "Schiff", "Schlange", "Schloss", "Schmetterling",
+  "Schnee", "Schokolade", "Schreiner", "Schule", "Schüler", "Schuh", "Schrank", "See", "Seide", "Seife",
+  "Sessel", "Silber", "Sofa", "Soldat", "Sonne", "Spiegel", "Spinat", "Sportler", "Sprache", "Spuk",
+  "Stadt", "Starkstrom", "Stecker", "Stein", "Stern", "Stift", "Stoff", "Stromkreis", "Stuhl", "Sturm",
+  "Substanz", "Suppe", "Symmetrie", "Tänzer", "Tal", "Tasse", "Tastatur", "Tee", "Technik", "Telefon",
+  "Teleskop", "Thermodynamik", "Tiger", "Tisch", "Tomate", "Toaster", "Torte", "Traube", "Traum", "Traktor",
+  "Tür", "Uhr", "Verkäufer", "Vertrauen", "Vogel", "Vulkan", "Wald", "Wasser", "Wecker", "Wein",
+  "Welt", "Wind", "Wiese", "Wolke", "Wolle", "Wort", "Wurst", "Zahnarzt", "Zebra", "Zeit",
+  "Zettel", "Ziel", "Zimmer", "Zinn", "Zitrone", "Zug", "Zucker", "Zufall", "Zunge", "Zwiebel"
+];
     const word = words[Math.floor(Math.random() * words.length)];
     const impostorIndex = Math.floor(Math.random() * room.players.length);
 
