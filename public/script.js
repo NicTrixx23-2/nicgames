@@ -48,7 +48,7 @@ socket.on("assignRole", ({ role, word }) => {
   document.getElementById("game").style.display = "none";
   document.getElementById("cardContainer").style.display = "block";
   const wordDiv = document.getElementById("word");
-  wordDiv.innerText = role === "impostor" ? "Du bist der IMPOSTOR!" : `Dein Wort: ${word}`;
+  wordDiv.innerText = role === "impostor" ? "Du IMPOSTOR!" : `${word}`;
   wordDiv.style = "";
   document.getElementById("confirmBtn").style.display = "inline-block";
   document.getElementById("cover").style.left = "0";
