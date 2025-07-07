@@ -138,6 +138,7 @@ document.getElementById("slider").addEventListener("mouseup", () => {
 
 window.addEventListener("beforeunload", () => {
   socket.emit("leaveRoom", currentRoom);
+  /*socket.emit("host-change");*/
   socket.disconnect();
   localStorage.removeItem("name");
   localStorage.removeItem("room");
