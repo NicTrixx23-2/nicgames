@@ -34,25 +34,34 @@ io.on("connection", (socket) => {
   });
 
   socket.on("joinRoom", ({ roomId, name }) => {
-    if (!rooms[roomId]) return;
-    rooms[roomId].players.push({ id: socket.id, name, isImpostor: false });
-    socket.join(roomId);
+  if (!rooms[roomId]) {
+    rooms[roomId] = {
+      players: [],
+      hostId: socket.id,
+      confirmed: 0,
+      votes: {},
+      votingActive: false,
+      name: "Lobby"
+    };
+  }
 
-    io.to(roomId).emit("playerList", {
-      names: rooms[roomId].players.map(p => p.name),
-      hostId: rooms[roomId].hostId,
-      groupName: rooms[roomId].name
-    });
+  // Check if name is already taken in this room
+  if (rooms[roomId].players.some(p => p.name === name)) {
+    socket.emit("nameTaken");
+    return;
+  }
 
-    io.emit("lobbyList", getAllLobbies());
+  rooms[roomId].players.push({ id: socket.id, name, isImpostor: false });
+  socket.join(roomId);
+
+  io.to(roomId).emit("playerList", {
+    names: rooms[roomId].players.map(p => p.name),
+    hostId: rooms[roomId].hostId,
+    groupName: rooms[roomId].name
   });
 
-  socket.on("changeGroupName", ({ roomId, newName }) => {
-    if (!rooms[roomId]) return;
-    rooms[roomId].name = newName;
-    io.to(roomId).emit("updateGroupName", newName);
-    io.emit("lobbyList", getAllLobbies());
-  });
+  io.emit("lobbyList", getAllLobbies());
+});
 
   socket.on("startGame", (roomId) => {
     const room = rooms[roomId];
